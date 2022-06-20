@@ -7,22 +7,18 @@ export default function ArmyImage({
   size = "100px",
   ...props
 }) {
-  const path = armyData.gameSystem
-    ? armyData.gameSystem.indexOf("aof") === 0
-      ? "aof"
-      : "gf_armies"
-    : armyData.gameSystemId === 4
-    ? "aof"
-    : "gf_armies";
-
   const urlName = name
     .replace(/Daemons of.+/gi, "Daemons")
     .replace(/\s+/g, "-")
     .toLowerCase();
 
-  const url =
-    imageUrl ||
-    `https://onepagerules.files.wordpress.com/2022/02/${urlName}.png`; // `img/${path}/${name}.png`;
+  const directory = (() => {
+    if (urlName === "jackals") return "2022/04";
+    if (urlName === "havoc-war-clans") return "2022/05";
+    return "2022/02";
+  })();
+
+  const url = imageUrl || `https://onepagerules.files.wordpress.com/${directory}/${urlName}.png`; // `img/${path}/${name}.png`;
 
   return (
     <div
@@ -48,9 +44,7 @@ export default function ArmyImage({
           backgroundPosition: "center",
           backgroundSize: "contain",
           backgroundRepeat: "no-repeat",
-          transform: `rotate(${
-            rotations[name] || (rotations[name] = 360 * Math.random())
-          }deg)`,
+          transform: `rotate(${rotations[name] || (rotations[name] = 360 * Math.random())}deg)`,
         }}
       ></div>
       <div

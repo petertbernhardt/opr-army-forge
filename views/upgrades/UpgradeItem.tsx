@@ -58,7 +58,7 @@ export default function UpgradeItem({
 
   return (
     <div className="is-flex is-align-items-center mb-1">
-      <div className="is-flex-grow-1 pr-2" style={{ color: "red" }}>
+      <div className="is-flex-grow-1 pr-2">
         {gainsGroups ? (
           Object.keys(gainsGroups).map((key, i) => {
             const group: IUpgradeGains[] = gainsGroups[key];

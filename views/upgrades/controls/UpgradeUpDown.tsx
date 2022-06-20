@@ -36,7 +36,6 @@ export default function UpgradeUpDown({
     dispatch(removeUpgrade({ unitId: unit.selectionId, upgrade, option }));
   };
   try {
-    const isApplied = UpgradeService.isApplied(selectedUnit, upgrade, option);
     const countApplied = UpgradeService.countApplied(
       selectedUnit,
       upgrade,

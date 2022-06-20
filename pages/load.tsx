@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
 import _ from "lodash";
-import { Delete, ShowChartRounded } from "@mui/icons-material";
+import { Delete } from "@mui/icons-material";
 import PersistenceService from "../services/PersistenceService";
 import { ISaveData } from "../data/interfaces";
 import ArmyImage from "../views/components/ArmyImage";
@@ -26,9 +26,11 @@ import { store } from "../data/store";
 import { MenuBar } from "../views/components/MenuBar";
 import { tryBack } from "../services/Helpers";
 import StarIcon from "@mui/icons-material/Star";
-import BackIcon from "@mui/icons-material/ArrowBackIosNew";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
+import CloseIcon from "@mui/icons-material/Close";
 import { useLongPress } from "use-long-press";
 import UAParser from "ua-parser-js";
+import DownloadFileIcon from "../views/icons/DownloadFile";
 
 export default function Load() {
   const dispatch = useDispatch<typeof store.dispatch>();
@@ -36,8 +38,12 @@ export default function Load() {
   const [localSaves, setLocalSaves] = useState([]);
   const [forceLoad, setForceLoad] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [selections, setSelections] = useState([]);
+  const [forceSelectMode, setForceSelectMode] = useState(false);
+  const [selections, setSelections] = useState([] as string[]);
   const [isMobile, setIsMobile] = useState(false);
+
+  const isSelected = (save) => selections.some((x) => x === save.list.creationTime);
+  const parsedSaves = localSaves.map((key) => JSON.parse(localStorage[key]));
 
   useEffect(() => {
     const ua = window.navigator.userAgent;
@@ -58,13 +64,11 @@ export default function Load() {
   const importFile = () => {
     var fileInput = document.getElementById("file-input");
     fileInput.dispatchEvent(new MouseEvent("click"));
-    //const fileSystemHandles = window.showOpenFilePicker();
-    //console.log(fileSystemHandles);
   };
 
   const onItemClick = (save: ISaveData) => {
     console.log("Item clicked");
-    if (selections.length === 0) {
+    if (selections.length === 0 && !forceSelectMode) {
       loadSave(save);
     } else {
       selectSave(save);
@@ -83,18 +87,18 @@ export default function Load() {
   };
 
   const forEachSelection = (callback) => {
-    for (var key of selections) {
-      const actualKey = Object.keys(localStorage).find((x) => x.endsWith(key));
+    for (var selection of selections) {
+      const actualKey = Object.keys(localStorage).find((x) => x.endsWith(selection));
       callback(JSON.parse(localStorage.getItem(actualKey)));
     }
     setForceLoad(forceLoad + 1);
     setLocalSaves([]);
+    setForceSelectMode(false);
   };
 
   const selectSave = (save) => {
-    const selected = selections.some((x) => x === save.list.creationTime);
     setSelections((prev) =>
-      selected
+      isSelected(save)
         ? prev.filter((x) => x !== save.list.creationTime)
         : prev.concat(save.list.creationTime)
     );
@@ -104,8 +108,13 @@ export default function Load() {
     PersistenceService.delete(save.list);
   };
 
+  const selectionIsFavourite = (key) =>
+    parsedSaves.find((x) => x.list.creationTime === key)?.favourite;
+
   const toggleFavourite = (save) => {
-    PersistenceService.toggleFavourite(save);
+    // True when any are not favourite (= favourite all selections)
+    const targetState = selections.some((x) => !selectionIsFavourite(x));
+    PersistenceService.toggleFavourite(save, targetState);
   };
 
   const readSingleFile = (e) => {
@@ -120,20 +129,13 @@ export default function Load() {
       try {
         const json: string = event.target.result as string;
         const saveData: ISaveData = JSON.parse(json);
+        const creationTime = new Date().getTime().toString();
+        saveData.list.creationTime = creationTime;
 
         PersistenceService.load(dispatch, saveData, (_) => {
           router.push("/list");
-          // Save to local
-          const saveName = file.name.replace(".json", "");
-          // if it doesn't exist, or user confirms they are happy to overwrite
-          if (
-            !PersistenceService.checkExists(saveData.list) ||
-            confirm(
-              "It looks like this list already exists. Are you sure you'd like to overwrite it?"
-            )
-          ) {
-            PersistenceService.saveImport(saveName, json);
-          }
+
+          PersistenceService.saveImport(creationTime, JSON.stringify(saveData));
 
           setLoading(false);
         });
@@ -145,13 +147,10 @@ export default function Load() {
     reader.readAsText(file);
   };
 
-  const isSelected = (save) => selections.some((x) => x === save.list.creationTime);
-  const parsedSaves = localSaves.map((key) => JSON.parse(localStorage[key]));
-
   const SaveList = ({ saves }) => {
     return (
       <Paper square elevation={0}>
-        <List>
+        <List className="p-0">
           {_.sortBy(saves, (save) => save.modified)
             .reverse()
             .map((save) => (
@@ -161,7 +160,7 @@ export default function Load() {
                 selected={isSelected(save)}
                 onSelect={selectSave}
                 onItemClick={onItemClick}
-                showCheckbox={selections?.length > 0 || !isMobile}
+                showCheckbox={selections?.length > 0 || !isMobile || forceSelectMode}
                 isMobile={isMobile}
               />
             ))}
@@ -174,8 +173,18 @@ export default function Load() {
 
   return (
     <>
-      {selections.length === 0 ? (
-        <MenuBar title="Open a List" onBackClick={() => tryBack(() => router.replace("/"))} />
+      {selections.length === 0 && !forceSelectMode ? (
+        <MenuBar
+          title="Open a List"
+          onBackClick={() => tryBack(() => router.replace("/"))}
+          right={
+            isMobile && (
+              <Button color="inherit" onClick={() => setForceSelectMode((x) => !x)}>
+                Select
+              </Button>
+            )
+          }
+        />
       ) : (
         <Paper elevation={2} square>
           <AppBar color="transparent" position="static">
@@ -186,18 +195,30 @@ export default function Load() {
                 color="primary"
                 aria-label="menu"
                 sx={{ mr: 2 }}
-                onClick={() => setSelections([])}
+                onClick={() => {
+                  setSelections([]);
+                  setForceSelectMode(false);
+                }}
               >
-                <BackIcon />
+                <CloseIcon />
               </IconButton>
               <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                 {selections.length} selected lists
               </Typography>
-              <IconButton color="primary" onClick={() => forEachSelection(toggleFavourite)}>
-                <StarIcon />
+              <IconButton
+                disabled={!selections.length}
+                color="primary"
+                onClick={() => forEachSelection(toggleFavourite)}
+              >
+                {selections.some((x) => !selectionIsFavourite(x)) ? (
+                  <StarIcon />
+                ) : (
+                  <StarBorderIcon />
+                )}
               </IconButton>
               <IconButton
                 color="primary"
+                disabled={!selections.length}
                 onClick={() => {
                   if (confirm(`Are you sure you want to delete ${selections.length} list(s)?`)) {
                     forEachSelection(deleteSave);
@@ -216,7 +237,7 @@ export default function Load() {
         <div className="mx-auto" style={{ maxWidth: "480px" }}>
           <div className="is-flex is-justify-content-center p-4 my-4">
             <Button variant="contained" color="primary" onClick={() => importFile()}>
-              <FileUploadOutlinedIcon /> <span className="ml-2">Upload Army Forge File</span>
+              <DownloadFileIcon fill="white" /> <span className="ml-2">Upload Army Forge File</span>
             </Button>
           </div>
           {loading && (

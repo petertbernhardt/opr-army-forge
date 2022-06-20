@@ -14,6 +14,8 @@ import {
   ClickAwayListener,
   Snackbar,
   Divider,
+  ListItemIcon,
+  Button,
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -24,10 +26,18 @@ import { RootState } from "../../data/store";
 import NotificationImportantIcon from "@mui/icons-material/NotificationImportant";
 import PersistenceService from "../../services/PersistenceService";
 import { updateCreationTime } from "../../data/listSlice";
-import ValidationErrors from "../ValidationErrors";
+import ValidationErrors, { competitiveGoogleDriveLinks } from "../ValidationErrors";
 import ValidationService from "../../services/ValidationService";
 import { useMediaQuery } from "react-responsive";
 import { setOpenReleaseNotes } from "../../data/appSlice";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import CodeIcon from "@mui/icons-material/Code";
+import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
+import CloudIcon from "@mui/icons-material/Cloud";
+import FolderOpenIcon from "@mui/icons-material/FolderOpen";
+import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
+import DownloadFileIcon from "../icons/DownloadFile";
 
 export default function MainMenu() {
   const army = useSelector((state: RootState) => state.army);
@@ -41,6 +51,14 @@ export default function MainMenu() {
 
   const handleLoad = () => {
     router.push("/load");
+  };
+
+  const handleDelete = () => {
+    const confirmMsg = "Are you sure you want to delete this list?";
+    if (confirm(confirmMsg)) {
+      PersistenceService.delete(list);
+      router.replace("/");
+    }
   };
 
   const handleSave = () => {
@@ -94,6 +112,8 @@ export default function MainMenu() {
     }
   };
 
+  const competitiveRulesLink = competitiveGoogleDriveLinks[army.gameSystem];
+
   const isBigScreen = useMediaQuery({ query: "(min-width: 1024px)" });
 
   return (
@@ -139,13 +159,25 @@ export default function MainMenu() {
                     <List>
                       <ListItem divider>
                         <ListItemText>
-                          <span style={{ fontWeight: 600 }}>Competitive List Validation</span>
+                          <p style={{ fontWeight: 600 }}>Competitive List Validation</p>
+                          <p className="mt-2" style={{ color: "rgba(0,0,0,.66)" }}>
+                            These rules are <span style={{ fontWeight: 600 }}>optional</span>. See
+                            the{" "}
+                            <a
+                              href={competitiveRulesLink}
+                              target="_blank"
+                              style={{ textDecoration: "underline" }}
+                            >
+                              competitive rules document
+                            </a>{" "}
+                            for more info.
+                          </p>
                         </ListItemText>
                       </ListItem>
                       {errors.map((error, index) => (
                         <ListItem
                           key={index}
-                          className="mx-4 px-0"
+                          className="mx-4 Ppx-0"
                           style={{ width: "auto" }}
                           divider={index < errors.length - 1}
                         >
@@ -194,17 +226,52 @@ export default function MainMenu() {
             open={Boolean(menuAnchorElement)}
             onClose={(_) => setMenuAnchorElement(null)}
           >
-            <MenuItem onClick={navigateToListConfig}>Edit Details</MenuItem>
-            <MenuItem onClick={() => router.push("/view")}>View Cards</MenuItem>
+            <MenuItem onClick={navigateToListConfig}>
+              <ListItemIcon>
+                <EditOutlinedIcon sx={{ color: "#9E9E9E" }} />
+              </ListItemIcon>
+              <ListItemText>Edit Details</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={() => router.push("/view")}>
+              <ListItemIcon>
+                <DashboardOutlinedIcon sx={{ color: "#9E9E9E" }} />
+              </ListItemIcon>
+              <ListItemText>View Cards</ListItemText>
+            </MenuItem>
             {!list.creationTime && <MenuItem onClick={handleSave}>Save</MenuItem>}
-            <MenuItem onClick={handleLoad}>Open a List</MenuItem>
+            {list.creationTime && (
+              <MenuItem onClick={handleDelete}>
+                <ListItemIcon>
+                  <DeleteOutlinedIcon sx={{ color: "#9E9E9E" }} />
+                </ListItemIcon>
+                <ListItemText>Delete List</ListItemText>
+              </MenuItem>
+            )}
+            <MenuItem onClick={handleLoad}>
+              <ListItemIcon>
+                <FolderOpenIcon sx={{ color: "#9E9E9E" }} />
+              </ListItemIcon>
+              <ListItemText>Open a List</ListItemText>
+            </MenuItem>
             <Divider />
-            <MenuItem onClick={handleShare}>Export as Army Forge File</MenuItem>
-            <MenuItem onClick={handleShareTTS}>Export as TTS File</MenuItem>
-            <MenuItem onClick={handleTextExport}>Export as Text</MenuItem>
+            <MenuItem onClick={handleShare}>
+              <ListItemIcon>
+                <DownloadFileIcon />
+              </ListItemIcon>
+              <ListItemText>Export as Army Forge File</ListItemText>
+            </MenuItem>
+            {/* <MenuItem onClick={handleShareTTS}>Export as TTS File</MenuItem> */}
+            <MenuItem onClick={handleTextExport}>
+              <ListItemIcon>
+                <AssignmentOutlinedIcon sx={{ color: "#9E9E9E" }} />
+              </ListItemIcon>
+              <ListItemText>Export as Text</ListItemText>
+            </MenuItem>
             <Divider />
             <MenuItem onClick={openOprWebapp}>Open OPR Webapp</MenuItem>
-            <MenuItem onClick={() => dispatch(setOpenReleaseNotes(true))}>Open Release Notes</MenuItem>
+            <MenuItem onClick={() => dispatch(setOpenReleaseNotes(true))}>
+              See Release Notes
+            </MenuItem>
           </Menu>
         </Toolbar>
       </AppBar>

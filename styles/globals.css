@@ -54,7 +54,6 @@ div[role="tooltip"] {
   background-color: #FAFAFA;
   z-index: 10;
   overflow: hidden;
-  margin-bottom:0.5rem;
 }
 .sticky.sticky-2 {
   top: 52px;

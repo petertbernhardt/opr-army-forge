@@ -13,6 +13,8 @@ import _ from "lodash";
 import { ISelectedUnit, IUpgradeGainsItem, IUpgradeGainsRule } from "../data/interfaces";
 import RuleList from "./components/RuleList";
 import { IViewPreferences } from "../pages/view";
+import { getFlatTraitDefinitions, ITrait } from "../data/campaign";
+import LinkIcon from "@mui/icons-material/Link";
 
 interface ViewCardsProps {
   prefs: IViewPreferences;
@@ -25,6 +27,7 @@ export default function ViewCards({ prefs }: ViewCardsProps) {
   const gameRules = army.rules;
   const armyRules = army.loadedArmyBooks.flatMap((x) => x.specialRules);
   const ruleDefinitions: IGameRule[] = gameRules.concat(armyRules);
+  const traitDefinitions = getFlatTraitDefinitions();
 
   const units: ISelectedUnit[] = (list?.units ?? []).map((u) => makeCopy(u));
 
@@ -33,10 +36,12 @@ export default function ViewCards({ prefs }: ViewCardsProps) {
   const unitAsKey = (unit: ISelectedUnit) => {
     return {
       id: unit.id,
-      // upgrades: unit.selectedUpgrades.map((x) => ({
-      //   sectionId: x.upgrade.uid,
-      //   optionId: x.option.id,
-      // })),
+      customName: unit.customName,
+      joinToUnit: unit.joinToUnit,
+      upgrades: unit.selectedUpgrades.map((x) => ({
+        sectionId: x.upgrade.uid,
+        optionId: x.option.id,
+      })),
       loadout: unit.loadout.map((x) => ({
         id: x.id,
         count: x.count,
@@ -59,19 +64,27 @@ export default function ViewCards({ prefs }: ViewCardsProps) {
     const rules = getRules(unit);
     usedRules.push(...rules.keys);
     usedRules.push(...rules.weaponRules.map((r) => r.name));
+
+    if (unit.traits?.length > 0) {
+      usedRules.push(...unit.traits);
+    }
+
     const originalUnit = units.find((x) => x.selectionId === unit.selectionId);
-    const attachedUnit = units.find((x) => x.joinToUnit === unit.selectionId);
+    const attachedUnit = units.find((x) => x.joinToUnit === unit.selectionId && x.id === unit.id);
     const originalUnitCost = UpgradeService.calculateUnitTotal(originalUnit);
     const attachedUnitCost = attachedUnit ? UpgradeService.calculateUnitTotal(attachedUnit) : 0;
+    const attachedTo = units.find((x) => x.selectionId === unit.joinToUnit);
 
     return (
       <UnitCard
         rules={rules}
         unit={unit}
+        attachedTo={attachedTo}
         pointCost={originalUnitCost + attachedUnitCost}
         count={unitCount}
         prefs={prefs}
         ruleDefinitions={ruleDefinitions}
+        traitDefinitions={traitDefinitions}
       />
     );
   };
@@ -89,7 +102,10 @@ export default function ViewCards({ prefs }: ViewCardsProps) {
         {prefs.showPsychic && <PsychicCard army={army} />}
       </div>
       {!prefs.showFullRules && (
-        <SpecialRulesCard usedRules={usedRules} ruleDefinitions={ruleDefinitions} />
+        <SpecialRulesCard
+          usedRules={usedRules}
+          ruleDefinitions={ruleDefinitions.concat(traitDefinitions as any[])}
+        />
       )}
     </div>
   );
@@ -97,14 +113,24 @@ export default function ViewCards({ prefs }: ViewCardsProps) {
 
 interface UnitCardProps {
   unit: ISelectedUnit;
+  attachedTo: ISelectedUnit;
   pointCost: number;
   rules: any;
   count: number;
   prefs: IViewPreferences;
   ruleDefinitions: any;
+  traitDefinitions: ITrait[];
 }
 
-function UnitCard({ unit, pointCost, count, prefs, ruleDefinitions }: UnitCardProps) {
+function UnitCard({
+  unit,
+  attachedTo,
+  pointCost,
+  count,
+  prefs,
+  ruleDefinitions,
+  traitDefinitions,
+}: UnitCardProps) {
   const toughness = toughFromUnit(unit);
 
   const unitRules = unit.specialRules
@@ -139,8 +165,8 @@ function UnitCard({ unit, pointCost, count, prefs, ruleDefinitions }: UnitCardPr
   const itemGroups = _.groupBy(items, (x) => x.name);
   const itemKeys = Object.keys(itemGroups);
 
-  const rulesSection = unitRules?.length > 0 && (
-    <div className="px-2 mb-4" style={{ fontSize: "14px" }}>
+  const rulesSection = (
+    <div className="px-2 mb-2" style={{ fontSize: "14px" }}>
       {ruleKeys.map((key, index) => {
         const group = ruleGroups[key];
 
@@ -177,7 +203,7 @@ function UnitCard({ unit, pointCost, count, prefs, ruleDefinitions }: UnitCardPr
         const count = group.reduce((total, x) => total + (x.count || 1), 0);
 
         const itemRules: IUpgradeGainsRule[] = item.content.filter(
-          (x) => x.type === "ArmyBookRule"
+          (x) => x.type === "ArmyBookRule" || x.type === "ArmyBookDefense"
         ) as any;
         const itemHasRules = itemRules.length > 0;
 
@@ -190,7 +216,7 @@ function UnitCard({ unit, pointCost, count, prefs, ruleDefinitions }: UnitCardPr
 
         return (
           <span key={index}>
-            {", "}
+            {ruleKeys.length > 0 && ", "}
             {count > 1 && !hideCount && `${count}x `}
             {item.name}
             {itemHasRules && (
@@ -203,6 +229,37 @@ function UnitCard({ unit, pointCost, count, prefs, ruleDefinitions }: UnitCardPr
           </span>
         );
       })}
+    </div>
+  );
+
+  const traitsSection = unit.traits?.length > 0 && (
+    <div className="px-2 mb-4" style={{ fontSize: "14px" }}>
+      {unit.traits.map((trait: string, index: number) => {
+        const traitDef = traitDefinitions.find((x) => x.name === trait);
+        if (!prefs.showFullRules)
+          return (
+            <span key={index}>
+              {index === 0 ? "" : ", "}
+              <RuleList specialRules={[traitDef]} />
+            </span>
+          );
+
+        return (
+          <p key={index}>
+            <span style={{ fontWeight: 600 }}>{traitDef.name} -</span>
+            <span> {traitDef.description}</span>
+          </p>
+        );
+      })}
+    </div>
+  );
+
+  const joinedUnitText = attachedTo && (
+    <div className="is-flex" style={{ justifyContent: "center" }}>
+      <LinkIcon />
+      <p className="mb-2" style={{ textAlign: "center" }}>
+        Joined to {attachedTo.customName || attachedTo.name}
+      </p>
     </div>
   );
 
@@ -225,9 +282,13 @@ function UnitCard({ unit, pointCost, count, prefs, ruleDefinitions }: UnitCardPr
       }
       content={
         <>
+          {joinedUnitText}
           {stats}
           {rulesSection}
-          <UnitEquipmentTable unit={unit} hideEquipment={true} square />
+          {traitsSection}
+          <div className="mt-4">
+            <UnitEquipmentTable unit={unit} hideEquipment={true} square />
+          </div>
         </>
       }
     />

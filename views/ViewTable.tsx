@@ -214,7 +214,7 @@ function UnitRow({ unit, rules, count, prefs, ruleDefinitions, maxCellWidth }: U
             >
               {weapon.count}x {weapon.name}
             </td>
-            <td style={cellStyle}>{weapon.range ? weapon.range + '"' : "-"}</td>
+            <td style={cellStyle}>{(weapon as any).range ? (weapon as any).range + '"' : "-"}</td>
             <td style={cellStyle}>A{weapon.attacks}</td>
             <td style={cellStyle}>
               {weapon.specialRules?.map((r) => RulesService.displayName(r)).join(", ")}

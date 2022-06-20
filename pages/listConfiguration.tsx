@@ -49,7 +49,7 @@ export default function ListConfiguration() {
 
   useEffect(() => {
     // TODO: Be nice to the user and work out if the name was set manually before overriding it? nah
-    setArmyName(armyData?.name ?? "");
+    setArmyName(listState?.name || armyData?.name || "");
   }, [armyData]);
 
   return (

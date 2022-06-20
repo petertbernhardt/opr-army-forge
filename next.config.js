@@ -1,4 +1,4 @@
-if (false) {
+//if (false) {
   const withPWA = require("next-pwa");
   const runtimeCaching = require("next-pwa/cache");
 
@@ -8,4 +8,4 @@ if (false) {
       runtimeCaching,
     },
   });
-}
+//}

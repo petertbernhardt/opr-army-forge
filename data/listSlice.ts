@@ -17,6 +17,7 @@ export interface ListState {
   selectedUnitId?: string;
   points: number;
   unitPreview?: ISelectedUnit;
+  campaignMode?: boolean;
 }
 
 const initialState: ListState = {
@@ -27,7 +28,8 @@ const initialState: ListState = {
   selectedUnitId: null,
   undoUnitRemove: null,
   points: 0,
-  unitPreview: null
+  unitPreview: null,
+  campaignMode: false
 };
 
 const debounceSave = debounce(1500, (state: ListState) => {
@@ -41,11 +43,8 @@ export const listSlice = createSlice({
     resetList: (state) => {
       return initialState;
     },
-    createList: (state, action: PayloadAction<{ name: string; pointsLimit?: number; creationTime: string; }>) => {
-      const { name, pointsLimit, creationTime } = action.payload;
-      state.creationTime = creationTime;
-      state.name = name;
-      state.pointsLimit = pointsLimit;
+    createList: (state, action: PayloadAction<ListState>) => {
+      return action.payload;
     },
     updateCreationTime: (state, action: PayloadAction<string>) => {
       state.creationTime = action.payload;
@@ -268,6 +267,32 @@ export const listSlice = createSlice({
     },
     clearPreview(state) {
       state.unitPreview = null;
+    },
+    adjustXp(state, action: PayloadAction<{ unitId: string, xp: number }>) {
+      const { unitId, xp } = action.payload;
+      const unit = state.units.find(u => u.selectionId === unitId);
+      if (!unit.xp)
+        unit.xp = 0;
+      unit.xp += xp;
+      debounceSave(current(state));
+    },
+    toggleTrait(state, action: PayloadAction<{ unitId: string, trait: string }>) {
+      const { unitId, trait } = action.payload;
+      const unit = state.units.find(u => u.selectionId === unitId);
+      const existingTraitIndex = unit.traits.findIndex(t => t === trait);
+      if (existingTraitIndex >= 0) {
+        unit.traits.splice(existingTraitIndex, 1);
+      } else {
+        unit.traits.push(trait);
+      }
+
+      debounceSave(current(state));
+    },
+    setUnitNotes(state, action: PayloadAction<{ unitId: string, notes: string }>) {
+      const { unitId, notes } = action.payload;
+      const unit = state.units.find(u => u.selectionId === unitId);
+      unit.notes = notes;
+      debounceSave(current(state));
     }
   },
 })
@@ -294,7 +319,10 @@ export const {
   undoRemoveUnit,
   removeUnitsForBook,
   previewUnit,
-  clearPreview
-} = listSlice.actions
+  clearPreview,
+  adjustXp,
+  toggleTrait,
+  setUnitNotes
+} = listSlice.actions;
 
-export default listSlice.reducer
+export default listSlice.reducer;

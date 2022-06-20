@@ -71,9 +71,7 @@ export default function UnitListItem(props: UnitListItemProps) {
             })}
           </div>
           <RuleList
-            specialRules={unit.specialRules.concat(
-              UnitService.getAllUpgradedRules(unit as any)
-            )}
+            specialRules={unit.specialRules.concat(UnitService.getAllUpgradedRules(unit as any))}
           />
         </div>
       </Paper>

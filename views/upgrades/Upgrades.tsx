@@ -7,6 +7,8 @@ import {
   MenuItem,
   InputLabel,
   Select,
+  TextField,
+  Button,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../data/store";
@@ -16,12 +18,20 @@ import UnitEquipmentTable from "../UnitEquipmentTable";
 import RuleList from "../components/RuleList";
 import { ISpecialRule, IUpgradePackage } from "../../data/interfaces";
 import UnitService from "../../services/UnitService";
-import { joinUnit, addCombinedUnit, removeUnit, moveUnit, selectUnit } from "../../data/listSlice";
+import {
+  joinUnit,
+  addCombinedUnit,
+  removeUnit,
+  moveUnit,
+  selectUnit,
+  setUnitNotes,
+} from "../../data/listSlice";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import SpellsTable from "../SpellsTable";
 import { CustomTooltip } from "../components/CustomTooltip";
-import UpgradeService from "../../services/UpgradeService";
+import CampaignUpgrades from "./CampaignUpgrades";
 import { IGameRule } from "../../data/armySlice";
+import UnitNotes from "../components/UnitNotes";
 
 export function Upgrades({ mobile = false }) {
   const list = useSelector((state: RootState) => state.list);
@@ -53,7 +63,7 @@ export function Upgrades({ mobile = false }) {
       .concat(unitUpgradeRules)
       .filter((r) => r.name !== "-");
 
-  const isSkirmish = gameSystem !== "gf" && gameSystem !== "aof";
+  const isSkirmish = gameSystem !== "gf" && gameSystem !== "aof" && gameSystem !== "aofr";
   const isHero = selectedUnit
     ? selectedUnit.specialRules.findIndex((sr) => sr.name === "Hero") > -1
     : false;
@@ -195,12 +205,23 @@ export function Upgrades({ mobile = false }) {
   return (
     <div className={mobile ? styles["upgrade-panel-mobile"] : styles["upgrade-panel"]}>
       {selectedUnit && (
-        <Paper square elevation={0}>
+        <Paper square elevation={0} className="pb-4">
           {combineUnitControl()}
           {joinToUnitControl()}
 
+          <div className="px-4 pt-4 pb-2">
+            Qua {selectedUnit.quality}+ Def {selectedUnit.defense}+
+          </div>
+
+          {/* Rules */}
+          {specialRules?.length > 0 && (
+            <div className="px-4 pb-4">
+              <RuleList specialRules={specialRules} />
+            </div>
+          )}
+
           {/* Equipment */}
-          <div className="px-4 pt-2">
+          <div className="px-4 pb-4">
             <UnitEquipmentTable unit={selectedUnit} square={true} />
           </div>
           {isPsychic && (
@@ -208,14 +229,15 @@ export function Upgrades({ mobile = false }) {
               <SpellsTable unit={selectedUnit} />
             </div>
           )}
-          {/* Rules */}
-          {specialRules?.length > 0 && (
-            <div className="p-4 mb-4">
-              <h4 style={{ fontWeight: 600, fontSize: "14px" }}>Special Rules</h4>
-              <RuleList specialRules={specialRules} />
-            </div>
-          )}
+
+          <div className="mx-4">
+            <UnitNotes selectedUnit={selectedUnit} />
+          </div>
         </Paper>
+      )}
+
+      {list.campaignMode && selectedUnit && !previewMode && (
+        <CampaignUpgrades unit={selectedUnit} />
       )}
 
       {upgradeSets.map((pkg: IUpgradePackage) => (

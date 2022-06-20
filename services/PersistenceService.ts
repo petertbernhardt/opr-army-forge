@@ -78,45 +78,54 @@ export default class PersistenceService {
           optionId: x.option.id
         })),
         combined: u.combined,
-        joinToUnit: u.joinToUnit
+        joinToUnit: u.joinToUnit,
+        xp: u.xp,
+        traits: u.traits,
+        notes: u.notes
       }))
     };
   }
 
   public static updateSave(list: ListState) {
 
-    const key = this.getSaveKey(list.creationTime);
+    this.updateSaveData(list.creationTime, existingSave => {
+      const armyIds = _.uniq(list.units.map(u => u.armyId));
+      const points: number = UpgradeService.calculateListTotal(list.units);
+
+      const saveData: ISaveData = {
+        ...existingSave,
+        armyIds: armyIds,
+        modified: new Date().toJSON(),
+        listPoints: points,
+        list: this.getDataForSave(list),
+        saveVersion: this.currentSaveVersion
+      };
+
+      console.log("Updating save...", saveData);
+
+      return saveData;
+    });
+  }
+
+  private static updateSaveData(creationTime: any, modifySaveFunc: (save: ISaveData) => ISaveData) {
+    const key = this.getSaveKey(creationTime);
     const localSave = localStorage[key];
     if (!localSave)
       return;
 
-    const armyIds = _.uniq(list.units.map(u => u.armyId));
-
-    const existingSave: ISaveData = JSON.parse(localSave);
-    const points: number = UpgradeService.calculateListTotal(list.units);
-
-    const saveData: ISaveData = {
-      ...existingSave,
-      armyIds: armyIds,
-      modified: new Date().toJSON(),
-      listPoints: points,
-      list: this.getDataForSave(list),
-      saveVersion: this.currentSaveVersion
-    };
-
-    console.log("Updating save...", saveData);
+    const saveData = modifySaveFunc(JSON.parse(localSave));
 
     localStorage[key] = JSON.stringify(saveData);
   }
 
-  public static toggleFavourite(save: ISaveData) {
+  public static toggleFavourite(save: ISaveData, isFavourite: boolean) {
     const key = Object
       .keys(localStorage)
       .find(key => key.endsWith(save.list.creationTime));
-      localStorage[key] = JSON.stringify({
-        ...save,
-        favourite: !save.favourite
-      });
+    localStorage[key] = JSON.stringify({
+      ...save,
+      favourite: isFavourite
+    });
   }
 
   public static delete(list: ListState) {
@@ -214,7 +223,6 @@ export default class PersistenceService {
 
     dispatch(resetLoadedBooks());
     dispatch(setGameSystem(save.gameSystem));
-
     const armyIds = save.armyIds || [save.armyId];
 
     const promises = armyIds.map(id => dispatch(getArmyBookData({
@@ -314,6 +322,7 @@ export default class PersistenceService {
     //
     // ...
     for (let unit of list.units) {
+      // TODO: Campaign unit pt cost...?
       lines.push(`${unit.customName ?? unit.name} [${unit.size}] | Qua ${unit.quality}+ Def ${unit.defense}+ | ${UpgradeService.calculateUnitTotal(unit)}pts`);
       lines.push(getWeapons(unit));
       lines.push(getRules(unit) + "\n");

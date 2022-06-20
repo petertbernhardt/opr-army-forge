@@ -18,7 +18,11 @@ import { makeCopy } from "./Helpers";
 export default class UpgradeService {
   private static readonly countRegex = /^(\d+)x\s/;
 
+  // TODO: Hacky singleton thing?
+  public static gameSystem: string;
+
   static calculateListTotal(list: ISelectedUnit[]) {
+    // TODO: Campaign unit XP
     return list.reduce((value, current) => value + UpgradeService.calculateUnitTotal(current), 0);
   }
 
@@ -125,6 +129,13 @@ export default class UpgradeService {
       if (upgrade.cost) {
         cost += upgrade.cost;
       }
+    }
+
+    const levelCost =
+      UpgradeService.gameSystem === "gf" || UpgradeService.gameSystem === "aof" ? 25 : 5;
+
+    if (unit.xp) {
+      cost += Math.floor(unit.xp / 5) * levelCost;
     }
 
     return cost;

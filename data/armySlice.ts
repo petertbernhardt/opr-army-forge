@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { useCallback } from 'react';
 import { gameSystemToSlug } from '../services/Helpers';
+import UpgradeService from '../services/UpgradeService';
 import WebappApiService from '../services/WebappApiService';
 import { IUnit, IUpgradePackage } from './interfaces';
 
@@ -89,6 +90,8 @@ export const armySlice = createSlice({
       state.selectedFactions = [];
     },
     setGameSystem: (state, action: PayloadAction<string>) => {
+      const gameSystem = action.payload;
+      UpgradeService.gameSystem = gameSystem;
       return {
         ...state,
         gameSystem: action.payload,

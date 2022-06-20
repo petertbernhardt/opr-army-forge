@@ -57,6 +57,9 @@ export interface IUnitSelectionData {
   loadout: IUpgradeGains[];
   combined: boolean;
   joinToUnit?: string;
+  xp: number;
+  traits: string[]; // Trait names only
+  notes: string;
 }
 
 export interface ISelectedUnit extends IUnit, IUnitSelectionData { }

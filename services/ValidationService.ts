@@ -8,18 +8,21 @@ const unitPointThresholds = {
   "gf": 200,
   "gff": 30,
   "aof": 165,
+  "aofr": 165,
   "aofs": 25,
 };
 const heroPointThresholds = {
   "gf": 500,
   "gff": 150,
   "aof": 500,
+  "aofr": 500,
   "aofs": 150,
 };
 const duplicateUnitThresholds = {
   "gf": 1000,
   "gff": 150,
   "aof": 1000,
+  "aofr": 1000,
   "aofs": 150,
 };
 
@@ -61,7 +64,7 @@ export default class ValidationService {
       errors.push(`Max 1 hero per full ${heroPointThresholds[system]}pts.`);
 
     if (unitCount > Math.floor(points / unitPointThresholds[system])) {
-      const combinedMsg = system === "gf" || system === "aof"
+      const combinedMsg = system === "gf" || system === "aof" || system === "aofr"
         ? ` (combined units count as just 1 unit)`
         : "";
       errors.push(`Max 1 unit per full ${unitPointThresholds[system]}pts${combinedMsg}.`);
@@ -72,7 +75,7 @@ export default class ValidationService {
 
     //#endregion
 
-    if (army.gameSystem === "gf" || army.gameSystem === "aof") {
+    if (army.gameSystem === "gf" || army.gameSystem === "aof" || army.gameSystem === "aofr") {
 
       if (units.some(u => u.combined && u.size === 1))
         errors.push(`Cannot combine units of unit size [1].`);

@@ -22,9 +22,7 @@ export default function UpgradePanelHeader() {
   }, [selectedUnit?.selectionId]);
 
   const debounceSave = useCallback(
-    debounce(1000, (name) =>
-      dispatch(renameUnit({ unitId: selectedUnit.selectionId, name }))
-    ),
+    debounce(1000, (name) => dispatch(renameUnit({ unitId: selectedUnit.selectionId, name }))),
     [list]
   );
 
@@ -61,11 +59,7 @@ export default function UpgradePanelHeader() {
           </div>
         )}
         {!previewMode && (
-          <IconButton
-            color="primary"
-            className="ml-2"
-            onClick={() => toggleEditMode()}
-          >
+          <IconButton color="primary" className="ml-2" onClick={() => toggleEditMode()}>
             <EditIcon />
           </IconButton>
         )}
