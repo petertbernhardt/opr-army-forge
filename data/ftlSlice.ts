@@ -4,6 +4,8 @@ import WebappApiService from '../services/WebappApiService';
 export interface FtlState {
   factionData: IFtlData[];
   selectedFaction: IFtlData;
+  ships: ISelectededShip[];
+  loaded: boolean;
 }
 
 export interface IFtlData {
@@ -16,7 +18,6 @@ export interface IFtlData {
   heroes: IFtlUpgrade[];
   titles: IFtlTitle[];
   specialRules: IFtlRule[];
-  legendaryFleets: IFtlLegendaryFleet[];
 }
 
 export interface IShipClass {
@@ -86,17 +87,15 @@ export interface IFtlTitle {
   modifiers: any[]
 }
 
-export interface IFtlLegendaryFleet {
-  key: string;
-  name: string;
-  pro: string;
-  con: string;
-  modifiers: any[];
+export interface ISelectededShip extends IShipClass {
+
 }
 
 const initialState: FtlState = {
   factionData: null,
-  selectedFaction: null
+  selectedFaction: null,
+  ships: [],
+  loaded: false
 };
 
 export const getFtlBooks = createAsyncThunk("army/getArmyBooks", async () => {
@@ -121,9 +120,11 @@ export const ftlSlice = createSlice({
         upgrades: data.upgrades.concat(commonFaction.upgrades),
         heroes: data.heroes.concat(commonFaction.heroes),
         titles: data.titles.concat(commonFaction.titles),
-        specialRules: data.specialRules.concat(commonFaction.specialRules),
-        legendaryFleets: data.legendaryFleets.concat(commonFaction.legendaryFleets),
+        specialRules: data.specialRules.concat(commonFaction.specialRules)
       };
+
+      // TODO: where should this go?
+      state.loaded = true;
     }
   },
   extraReducers(builder) {
