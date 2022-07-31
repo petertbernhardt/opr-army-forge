@@ -1,20 +1,17 @@
-import { AppBar, Box, Button, Divider, Paper, Stack, Tab, Tabs, Tooltip } from "@mui/material";
-import React, { Fragment, useEffect, useState } from "react";
+import { AppBar, Button, Divider, Paper, Stack, Tab, Tabs } from "@mui/material";
+import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../data/store";
 import TabPanel from "../views/TabPanel";
 import { Socket } from "socket.io-client";
-import { MainList } from "./MainList";
 import { IGameplayUnit, modifyUnit } from "../data/gameplaySlice";
-import Router, { useRouter } from "next/router";
+import { useRouter } from "next/router";
 import { BottomSheet } from "react-spring-bottom-sheet";
 import "react-spring-bottom-sheet/dist/style.css";
 import UnitEquipmentTable from "./UnitEquipmentTable";
-import UnitListItem from "./components/UnitListItem";
 import UnitService from "../services/UnitService";
 import _ from "lodash";
 import UpgradeService from "../services/UpgradeService";
-import EquipmentService from "../services/EquipmentService";
 import RuleList from "./components/RuleList";
 
 export interface GameViewProps {
@@ -51,14 +48,11 @@ export default function GameView({ socket }: GameViewProps) {
         </Tabs>
       </AppBar>
       <TabPanel value={tab} index={0}>
-        <>
-          <UnitList socket={socket} units={myList?.units} onUnitClicked={onUnitSelected} />
-        </>
+        <UnitList socket={socket} units={myList?.units} onUnitClicked={onUnitSelected} />
       </TabPanel>
       <TabPanel value={tab} index={1}>
-        <MainList onSelected={() => {}} onUnitRemoved={() => {}} units={enemyList?.units ?? []} />
+        <UnitList socket={socket} units={enemyList?.units} onUnitClicked={onUnitSelected} />
       </TabPanel>
-
       <BottomSheet
         open={Boolean(selection)}
         onDismiss={() => setSelection(undefined)}
@@ -136,11 +130,16 @@ function ListItem({ socket, unit, onUnitClicked }: ListItemProps) {
         square
         onClick={() => onUnitClicked(unit)}
       >
-        <div className="is-flex is-flex-grow-1 is-align-items-center mb-2 px-2">
+        <div className="is-flex is-flex-grow-1 is-align-items-center mb-2 px-2 has-text-centered">
           <div className="is-flex-grow-1">
             <p className="" style={{ textDecoration: unit.dead ? "line-through" : "" }}>
               <span>{unit.customName || unit.name} </span>
-              <span style={{ color: "#656565" }}>[{unitSize}]</span>
+              <span style={{ color: "#656565" }}>
+                [{unitSize}]{" "}
+                <span style={{ fontSize: "80%" }}>
+                  {UpgradeService.calculateUnitTotal(unit)}pts
+                </span>
+              </span>
               <span>{unit.pinned ? " (Pinned)" : ""}</span>
             </p>
             <div
@@ -149,7 +148,7 @@ function ListItem({ socket, unit, onUnitClicked }: ListItemProps) {
                 color: "rgba(0,0,0,0.6)",
               }}
             >
-              <div className="is-flex">
+              <div className="is-flex" style={{ justifyContent: "center" }}>
                 <p>Qua {unit.quality}+</p>
                 <p className="ml-2">Def {unit.defense}+</p>
               </div>
@@ -160,11 +159,10 @@ function ListItem({ socket, unit, onUnitClicked }: ListItemProps) {
               />
             </div>
           </div>
-          <p>{UpgradeService.calculateUnitTotal(unit)}pts</p>
           {/* {props.rightControl} */}
         </div>
         {!unit.dead && <UnitEquipmentTable loadout={unit.loadout} square />}
-        <Stack sx={{ mt: 2, px: 2 }} direction="row" spacing={2}>
+        <Stack sx={{ mt: 2, px: 2, justifyContent: "center" }} direction="row" spacing={2}>
           {unit.dead ? (
             <Button size="small" onClick={() => sendModifyUnit({ dead: false })}>
               Restore
