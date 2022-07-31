@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import React, { Fragment, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import io from "socket.io-client";
+import io, { Socket } from "socket.io-client";
 import { getGameRules, resetLoadedBooks, setGameSystem } from "../data/armySlice";
 import { addList, IList, setLobby } from "../data/gameplaySlice";
 import { RootState, useAppDispatch } from "../data/store";
@@ -12,18 +12,20 @@ import { MenuBar } from "../views/components/MenuBar";
 import WifiOffIcon from "@mui/icons-material/WifiOff";
 import GameView from "../views/GameView";
 
-const socket =
-  window.location.href.indexOf("localhost") > -1 || window.location.href.indexOf("10.0.1.20") > -1
-    ? io("http://10.0.1.20:3001")
-    : io("https://opr-gameplay-tracker.herokuapp.com/");
-
 function Gameplay() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const gameplay = useSelector((state: RootState) => state.gameplay);
-  const [isConnected, setIsConnected] = useState(socket.connected);
+  const [socket, setSocket] = useState<Socket>();
+  const [isConnected, setIsConnected] = useState(socket?.connected);
 
   useEffect(() => {
+    const socket =
+      window.location.href.indexOf("localhost") > -1 ||
+      window.location.href.indexOf("10.0.1.20") > -1
+        ? io("http://10.0.1.20:3001")
+        : io("https://opr-gameplay-tracker.herokuapp.com/");
+    setSocket(socket);
     // Reset all loaded books
     dispatch(resetLoadedBooks());
 
@@ -65,7 +67,7 @@ function Gameplay() {
           </Stack>
         }
       />
-      {gameplay.lobbyId ? <GameView socket={socket} /> : <StartGame />}
+      {gameplay.lobbyId ? <GameView socket={socket} /> : <StartGame socket={socket} />}
       {gameplay.lists.map((list) => (
         <Fragment key={list.user}></Fragment>
       ))}
@@ -75,7 +77,7 @@ function Gameplay() {
 
 export default dynamic(() => Promise.resolve(Gameplay), { ssr: false });
 
-function StartGame() {
+function StartGame({ socket }) {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
