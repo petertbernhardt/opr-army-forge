@@ -110,7 +110,6 @@ interface ListItemProps {
 
 function ListItem({ socket, unit, onUnitClicked }: ListItemProps) {
   const unitSize = UnitService.getSize(unit);
-  const weaponGroups = _.groupBy(unit.loadout, (x) => x.name + x.attacks);
 
   const sendModifyUnit = (modification: any) => {
     const action = modifyUnit({

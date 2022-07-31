@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import React, { Fragment, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import io from "socket.io-client";
-import { resetLoadedBooks, setGameSystem } from "../data/armySlice";
+import { getGameRules, resetLoadedBooks, setGameSystem } from "../data/armySlice";
 import { addList, IList, setLobby } from "../data/gameplaySlice";
 import { RootState, useAppDispatch } from "../data/store";
 import PersistenceService from "../services/PersistenceService";
@@ -82,6 +82,7 @@ function StartGame() {
     const listId = router.query["listId"] as string;
     const save = PersistenceService.getSaveData(listId);
     dispatch(setGameSystem(save.gameSystem));
+    dispatch(getGameRules(save.gameSystem));
     const armyIds = save.armyIds || [save.armyId];
     const armyBooks = await PersistenceService.loadBooks(dispatch, armyIds, save.gameSystem);
     const list: IList = {
@@ -89,7 +90,6 @@ function StartGame() {
       user: socket.id,
     };
     dispatch(addList(list));
-    //dispatch(getGameRules(save.gameSystem));
     return list;
   };
 
