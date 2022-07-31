@@ -44,7 +44,6 @@ export default function GameView({ socket }: GameViewProps) {
           indicatorColor="primary"
         >
           <Tab label="My Units" />
-          <Tab label="Enemy Units" />
           {enemyLists.map((list, i) => (
             <Tab key={list.user} label={`Enemy ${i + 1} Units`} />
           ))}
