@@ -33,6 +33,10 @@ export const gameplaySlice = createSlice({
     addList(state, action: PayloadAction<IList>) {
       state.lists.push(action.payload)
     },
+    removeUser(state, action: PayloadAction<string>) {
+      const userId = action.payload;
+      state.lists = state.lists.filter(list => list.user !== userId);
+    },
     modifyUnit(state, action: PayloadAction<{ user: string, unitId: string, modification: any }>) {
       const { user, unitId, modification } = action.payload;
       const list = state.lists.find(x => x.user === user);
@@ -43,6 +47,6 @@ export const gameplaySlice = createSlice({
 })
 
 // Action creators are generated for each case reducer function
-export const { setLobby, addList, modifyUnit } = gameplaySlice.actions;
+export const { setLobby, addList, modifyUnit, removeUser } = gameplaySlice.actions;
 
 export default gameplaySlice.reducer;

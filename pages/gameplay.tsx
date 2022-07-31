@@ -5,7 +5,7 @@ import React, { Fragment, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import io, { Socket } from "socket.io-client";
 import { getGameRules, resetLoadedBooks, setGameSystem } from "../data/armySlice";
-import { addList, IList, setLobby } from "../data/gameplaySlice";
+import { addList, IList, removeUser, setLobby } from "../data/gameplaySlice";
 import { RootState, useAppDispatch } from "../data/store";
 import PersistenceService from "../services/PersistenceService";
 import { MenuBar } from "../views/components/MenuBar";
@@ -14,7 +14,6 @@ import GameView from "../views/GameView";
 
 function Gameplay() {
   const dispatch = useAppDispatch();
-  const router = useRouter();
   const gameplay = useSelector((state: RootState) => state.gameplay);
   const [socket, setSocket] = useState<Socket>();
   const [isConnected, setIsConnected] = useState(socket?.connected);
@@ -25,7 +24,9 @@ function Gameplay() {
       window.location.href.indexOf("10.0.1.20") > -1
         ? io("http://10.0.1.20:3001")
         : io("https://opr-gameplay-tracker.herokuapp.com/");
+
     setSocket(socket);
+
     // Reset all loaded books
     dispatch(resetLoadedBooks());
 
@@ -40,6 +41,10 @@ function Gameplay() {
     socket.on("user-joined", (user: any) => {
       console.log(user);
       dispatch(addList(user.list));
+    });
+
+    socket.on("user-disconnect", (userId: string) => {
+      dispatch(removeUser(userId));
     });
 
     socket.on("modify-unit", (action) => dispatch(action));
