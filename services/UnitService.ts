@@ -79,9 +79,9 @@ export default class UnitService {
     return this.getAllUpgrades(unit, false).filter((u) => u.type === "ArmyBookItem") as IUpgradeGainsItem[];
   }
 
-  public static getSize(unit: ISelectedUnit): number {
+  public static getSize(unit: ISelectedUnit, joined?: ISelectedUnit[]): number {
     const extraModelCount = unit.selectedUpgrades.map((x) => x.option).filter((u) => u.isModel).length;
-    return unit.size + extraModelCount;
+    return unit.size + extraModelCount + (joined?.reduce((size, u) => size + this.getSize(u), 0) ?? 0);
   }
 
   public static createUnitFromDefinition(unit: IUnit): ISelectedUnit {

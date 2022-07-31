@@ -21,7 +21,7 @@ import DataParsingService from "../services/DataParsingService";
 
 interface UnitEquipmentTableProps {
   loadout: IUpgradeGains[];
-  square: boolean;
+  square?: boolean;
   hideEquipment?: boolean;
 }
 

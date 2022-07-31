@@ -121,7 +121,7 @@ export default class UpgradeService {
     }
   }
 
-  static calculateUnitTotal(unit: ISelectedUnit) {
+  static calculateUnitTotal(unit: ISelectedUnit, joined?: ISelectedUnit[]) {
     if (!unit) return 0;
     let cost = unit.cost;
 
@@ -138,7 +138,7 @@ export default class UpgradeService {
       cost += Math.floor(unit.xp / 5) * levelCost;
     }
 
-    return cost;
+    return cost + (joined?.reduce((c, u) => c + this.calculateUnitTotal(u), 0) ?? 0);
   }
 
   public static isApplied(unit: ISelectedUnit, upgrade: IUpgrade, option: IUpgradeOption): boolean {
