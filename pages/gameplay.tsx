@@ -114,6 +114,10 @@ function StartGame({ socket }) {
         for (var user of lobby.users) {
           dispatch(addList(user.list));
         }
+        // Replay lobby history to get up to speed
+        for (let action of lobby.actions) {
+          dispatch(action);
+        }
       });
     }
   };

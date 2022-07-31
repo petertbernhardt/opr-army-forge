@@ -23,7 +23,7 @@ export default function GameView({ socket }: GameViewProps) {
   const router = useRouter();
   const gameplay = useSelector((state: RootState) => state.gameplay);
   const myList = gameplay.lists.find((x) => x.user === socket.id);
-  const enemyList = gameplay.lists.find((x) => x.user !== socket.id);
+  const enemyLists = gameplay.lists.filter((x) => x.user !== socket.id);
   const [tab, setTab] = useState(0);
   const [selection, setSelection] = useState<IGameplayUnit>();
 
@@ -45,14 +45,20 @@ export default function GameView({ socket }: GameViewProps) {
         >
           <Tab label="My Units" />
           <Tab label="Enemy Units" />
+          {enemyLists.map((list, i) => (
+            <Tab key={list.user} label={`Enemy ${i + 1} Units`} />
+          ))}
         </Tabs>
       </AppBar>
       <TabPanel value={tab} index={0}>
         <UnitList socket={socket} units={myList?.units} onUnitClicked={onUnitSelected} />
       </TabPanel>
-      <TabPanel value={tab} index={1}>
-        <UnitList socket={socket} units={enemyList?.units} onUnitClicked={onUnitSelected} readonly />
-      </TabPanel>
+      {enemyLists.map((list, i) => (
+        <TabPanel key={list.user} value={tab} index={i + 1}>
+          <UnitList socket={socket} units={list.units} onUnitClicked={onUnitSelected} readonly />
+        </TabPanel>
+      ))}
+
       <BottomSheet
         open={Boolean(selection)}
         onDismiss={() => setSelection(undefined)}
