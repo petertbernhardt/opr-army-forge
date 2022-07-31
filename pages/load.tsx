@@ -75,15 +75,14 @@ export default function Load() {
     }
   };
 
-  const loadSave = (save: ISaveData) => {
+  const loadSave = async (save: ISaveData) => {
     setLoading(true);
-    PersistenceService.load(dispatch, save, (armyData) => {
-      router.push({
-        pathname: "/list",
-        query: { listId: save.list.creationTime },
-      });
-      setLoading(false);
+    await PersistenceService.load(dispatch, save);
+    router.push({
+      pathname: "/list",
+      query: { listId: save.list.creationTime },
     });
+    setLoading(false);
   };
 
   const forEachSelection = (callback) => {
@@ -129,20 +128,17 @@ export default function Load() {
 
     const reader = new FileReader();
 
-    reader.onload = function (event) {
+    reader.onload = async function (event) {
       try {
         const json: string = event.target.result as string;
         const saveData: ISaveData = JSON.parse(json);
         const creationTime = new Date().getTime().toString();
         saveData.list.creationTime = creationTime;
 
-        PersistenceService.load(dispatch, saveData, (_) => {
-          router.push("/list");
-
-          PersistenceService.saveImport(creationTime, JSON.stringify(saveData));
-
-          setLoading(false);
-        });
+        await PersistenceService.load(dispatch, saveData);
+        router.push("/list");
+        PersistenceService.saveImport(creationTime, JSON.stringify(saveData));
+        setLoading(false);
       } catch (e) {
         setLoading(false);
       }

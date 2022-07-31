@@ -210,6 +210,10 @@ export function MainMenuOptions() {
     router.push({ pathname: "/listConfiguration", query: { ...router.query, edit: true } });
   };
 
+  const startGame = () => {
+    router.push({ pathname: "/gameplay", query: { ...router.query } });
+  };
+
   const openOprWebapp = () => {
     window.open("https://webapp.onepagerules.com", "_blank");
   };
@@ -281,6 +285,7 @@ export function MainMenuOptions() {
           <ListItemText>Export as Text</ListItemText>
         </MenuItem>
         <Divider />
+        <MenuItem onClick={startGame}>Start Game</MenuItem>
         <MenuItem onClick={openOprWebapp}>Open OPR Webapp</MenuItem>
         <MenuItem onClick={() => dispatch(setOpenReleaseNotes(true))}>See Release Notes</MenuItem>
       </Menu>
