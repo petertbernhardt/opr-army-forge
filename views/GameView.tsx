@@ -31,17 +31,8 @@ export default function GameView({ socket }: GameViewProps) {
   const [selection, setSelection] = useState<IGameplayUnit>();
 
   const onUnitSelected = (unit: IGameplayUnit) => {
-    setSelection(unit as IGameplayUnit);
+    //setSelection(unit as IGameplayUnit);
     //sendModifyUnit(unit.selectionId, { activated: true });
-  };
-
-  const sendModifyUnit = (unitId: string, modification: any) => {
-    const action = modifyUnit({
-      user: socket.id,
-      unitId,
-      modification,
-    });
-    socket.emit("modify-unit", action);
   };
 
   return (
@@ -55,26 +46,16 @@ export default function GameView({ socket }: GameViewProps) {
           textColor="inherit"
           indicatorColor="primary"
         >
-          <Tab label="Unactivated" />
-          <Tab label="Activated" />
+          <Tab label="My Units" />
           <Tab label="Enemy Units" />
         </Tabs>
       </AppBar>
       <TabPanel value={tab} index={0}>
-        <UnitList
-          socket={socket}
-          units={myList?.units.filter((x) => !x.activated)}
-          onUnitClicked={onUnitSelected}
-        />
+        <>
+          <UnitList socket={socket} units={myList?.units} onUnitClicked={onUnitSelected} />
+        </>
       </TabPanel>
       <TabPanel value={tab} index={1}>
-        <MainList
-          onSelected={() => {}}
-          onUnitRemoved={() => {}}
-          units={myList?.units.filter((x) => x.activated) ?? []}
-        />
-      </TabPanel>
-      <TabPanel value={tab} index={2}>
         <MainList onSelected={() => {}} onUnitRemoved={() => {}} units={enemyList?.units ?? []} />
       </TabPanel>
 
@@ -106,17 +87,23 @@ interface UnitListProps {
 
 function UnitList({ socket, units, onUnitClicked }: UnitListProps) {
   if (!units) return null;
-  const displayUnits = UnitService.getDisplayUnits(units);
+  const displayUnits = _.flatten(Object.values(UnitService.getDisplayUnits(units)));
+  const [deadUnits, aliveUnits] = _.partition(displayUnits, (unit) => unit.dead);
+  const listItems = (units) =>
+    units.map((unit) => (
+      <ListItem key={unit.selectionId} socket={socket} unit={unit} onUnitClicked={onUnitClicked} />
+    ));
   return (
     <>
-      {_.flatten(Object.values(displayUnits)).map((unit) => (
-        <ListItem
-          key={unit.selectionId}
-          socket={socket}
-          unit={unit}
-          onUnitClicked={onUnitClicked}
-        />
-      ))}
+      {listItems(aliveUnits)}
+      {deadUnits.length > 0 && (
+        <>
+          <p className="menu-label my-2 px-4 pt-3">Dead Units</p>
+          <Divider />
+        </>
+      )}
+
+      {listItems(deadUnits)}
     </>
   );
 }
@@ -141,42 +128,72 @@ function ListItem({ socket, unit, onUnitClicked }: ListItemProps) {
   };
 
   return (
-    <Paper
-      className="py-2 mb-4"
-      elevation={0}
-      style={{ cursor: "pointer" }}
-      square
-      onClick={() => onUnitClicked(unit)}
-    >
-      <div className="is-flex is-flex-grow-1 is-align-items-center mb-2 px-2">
-        <div className="is-flex-grow-1">
-          <p className="mb-1">
-            <span>{unit.customName || unit.name} {unit.pinned ? "(pinned)" : ""}</span>
-            <span style={{ color: "#656565" }}>[{unitSize}]</span>
-          </p>
-          <div
-            style={{
-              fontSize: "14px",
-              color: "rgba(0,0,0,0.6)",
-            }}
-          >
-            <div className="is-flex">
-              <p>Qua {unit.quality}+</p>
-              <p className="ml-2">Def {unit.defense}+</p>
+    <div className="mb-4">
+      <Paper
+        className="py-2"
+        elevation={0}
+        style={{ cursor: "pointer", opacity: unit.dead || unit.activated ? "0.5" : "1" }}
+        square
+        onClick={() => onUnitClicked(unit)}
+      >
+        <div className="is-flex is-flex-grow-1 is-align-items-center mb-2 px-2">
+          <div className="is-flex-grow-1">
+            <p className="" style={{ textDecoration: unit.dead ? "line-through" : "" }}>
+              <span>{unit.customName || unit.name} </span>
+              <span style={{ color: "#656565" }}>[{unitSize}]</span>
+              <span>{unit.pinned ? " (Pinned)" : ""}</span>
+            </p>
+            <div
+              style={{
+                fontSize: "14px",
+                color: "rgba(0,0,0,0.6)",
+              }}
+            >
+              <div className="is-flex">
+                <p>Qua {unit.quality}+</p>
+                <p className="ml-2">Def {unit.defense}+</p>
+              </div>
+              <RuleList
+                specialRules={unit.specialRules.concat(
+                  UnitService.getAllUpgradedRules(unit as any)
+                )}
+              />
             </div>
-            <RuleList
-              specialRules={unit.specialRules.concat(UnitService.getAllUpgradedRules(unit as any))}
-            />
           </div>
+          <p>{UpgradeService.calculateUnitTotal(unit)}pts</p>
+          {/* {props.rightControl} */}
         </div>
-        <p>{UpgradeService.calculateUnitTotal(unit)}pts</p>
-        {/* {props.rightControl} */}
-      </div>
-      <UnitEquipmentTable loadout={unit.loadout} square />
-      <Stack sx={{ mt: 2 }} direction="row" spacing={2}>
-        <Button size="small" onClick={() => sendModifyUnit({ activated: true })}>Activate</Button>
-        <Button size="small" onClick={() => sendModifyUnit({ pinned: true })}>Pinned</Button>
-      </Stack>
-    </Paper>
+        {!unit.dead && <UnitEquipmentTable loadout={unit.loadout} square />}
+        <Stack sx={{ mt: 2, px: 2 }} direction="row" spacing={2}>
+          {unit.dead ? (
+            <Button size="small" onClick={() => sendModifyUnit({ dead: false })}>
+              Restore
+            </Button>
+          ) : (
+            <>
+              {unit.activated ? (
+                <Button size="small" onClick={() => sendModifyUnit({ activated: false })}>
+                  Deactivate
+                </Button>
+              ) : (
+                <Button
+                  size="small"
+                  onClick={() => sendModifyUnit({ activated: true, pinned: false })}
+                >
+                  Activate
+                </Button>
+              )}
+              <Button size="small" onClick={() => sendModifyUnit({ pinned: true })}>
+                Pinned
+              </Button>
+              <Button size="small" onClick={() => sendModifyUnit({ dead: true })}>
+                Killed
+              </Button>
+            </>
+          )}
+        </Stack>
+      </Paper>
+      <Divider />
+    </div>
   );
 }

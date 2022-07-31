@@ -15,6 +15,7 @@ export interface IList {
 export interface IGameplayUnit extends ISelectedUnit {
   activated: boolean;
   pinned: boolean;
+  dead: boolean;
 }
 
 const initialState: GameplayState = {
