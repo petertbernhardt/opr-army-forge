@@ -12,7 +12,7 @@ import { MenuBar } from "../views/components/MenuBar";
 import WifiOffIcon from "@mui/icons-material/WifiOff";
 import GameView from "../views/GameView";
 
-const socket = io("http://10.0.1.20:3001");
+const socket = io("https://opr-gameplay-tracker.herokuapp.com/");
 
 function Gameplay() {
   const dispatch = useAppDispatch();
