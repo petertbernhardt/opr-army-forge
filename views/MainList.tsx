@@ -4,7 +4,7 @@ import { RootState } from "../data/store";
 import { ISelectedUnit } from "../data/interfaces";
 import RemoveIcon from "@mui/icons-material/Clear";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import { selectUnit, removeUnit, addUnits, ListState } from "../data/listSlice";
+import { selectUnit, removeUnit, addUnits } from "../data/listSlice";
 import UpgradeService from "../services/UpgradeService";
 import { Card, ListItemIcon, ListItemText, MenuItem } from "@mui/material";
 import UnitService from "../services/UnitService";
@@ -14,14 +14,17 @@ import { DropMenu } from "./components/DropMenu";
 import ArmyBookGroupHeader from "./components/ArmyBookGroupHeader";
 import UnitListItem from "./components/UnitListItem";
 
-export function MainList({ onSelected, onUnitRemoved }) {
-  const list = useSelector((state: RootState) => state.list);
+export interface MainListProps {
+  onSelected: (unit: ISelectedUnit) => void;
+  onUnitRemoved: (unit: ISelectedUnit) => void;
+  units: ISelectedUnit[];
+}
+
+export function MainList({ onSelected, onUnitRemoved, units }: MainListProps) {
   const loadedArmyBooks = useSelector((state: RootState) => state.army.loadedArmyBooks);
 
   const rootUnits = _.orderBy(
-    list.units.filter(
-      (u) => !(u.joinToUnit && list.units.some((t) => t.selectionId === u.joinToUnit))
-    ),
+    units.filter((u) => !(u.joinToUnit && units.some((t) => t.selectionId === u.joinToUnit))),
     (x) => x.sortId
   );
 
@@ -32,7 +35,7 @@ export function MainList({ onSelected, onUnitRemoved }) {
     <>
       {unitGroupKeys.map((key) => {
         const armyBook = loadedArmyBooks.find((book) => book.uid === key);
-        const points = list.units
+        const points = units
           .filter((u) => u.armyId === key)
           .reduce((total, unit) => total + UpgradeService.calculateUnitTotal(unit), 0);
         return (

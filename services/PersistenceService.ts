@@ -3,7 +3,7 @@ import { Dispatch } from "react";
 import { ArmyState, getArmyBookData, getGameRules, IArmyData, resetLoadedBooks, setGameSystem } from "../data/armySlice";
 import { ISaveData, ISavedListState, ISelectedUnit, ISpecialRule, IUnit, IUpgrade, IUpgradeGains, IUpgradeGainsWeapon, IUpgradeOption } from "../data/interfaces";
 import { ListState, loadSavedList } from "../data/listSlice";
-import { RootState } from "../data/store";
+import { AppDispatch, RootState } from "../data/store";
 import { groupBy, makeCopy } from "./Helpers";
 import RulesService from "./RulesService";
 import UnitService from "./UnitService";
@@ -221,31 +221,37 @@ export default class PersistenceService {
     };
   }
 
-  public static async loadFromKey(dispatch: Dispatch<any>, key: string, callback: (armyData: any) => void) {
+  public static getSaveData(key: string): ISaveData {
     const save = JSON.parse(localStorage[this.getSaveKey(key)]);
-    this.load(dispatch, save, callback);
+    return save as ISaveData;
   }
 
-  public static async load(dispatch: ThunkDispatch<RootState, any, any>, save: ISaveData, callback: (armyBooks: IArmyData[]) => void) {
+  public static async loadFromKey(dispatch: AppDispatch, key: string) {
+    const save = JSON.parse(localStorage[this.getSaveKey(key)]);
+    this.load(dispatch, save);
+  }
+
+  public static async load(dispatch: AppDispatch, save: ISaveData) {
 
     console.log("Loading save...", save);
 
     dispatch(resetLoadedBooks());
     dispatch(setGameSystem(save.gameSystem));
     const armyIds = save.armyIds || [save.armyId];
+    const armyBooks = await this.loadBooks(dispatch, armyIds, save.gameSystem);
+    console.log(armyBooks);
+    const list: ListState = this.buildListFromSave(save, armyBooks);
+    dispatch(loadSavedList(list));
+    dispatch(getGameRules(save.gameSystem));
+  }
 
-    const promises = armyIds.map(id => dispatch(getArmyBookData({
-      armyUid: id, gameSystem: save.gameSystem, reset: false
+  public static async loadBooks(dispatch: AppDispatch, armyBookIds: string[], gameSystem: string) {
+    const promises = armyBookIds.map(id => dispatch(getArmyBookData({
+      armyUid: id, gameSystem: gameSystem, reset: false
     })));
 
-    Promise.all(promises).then(results => {
-      const armyBooks = results.map(res => (res.payload as any).armyBookData) as IArmyData[];
-      console.log(armyBooks);
-      const list: ListState = this.buildListFromSave(save, armyBooks);
-      dispatch(loadSavedList(list));
-      dispatch(getGameRules(save.gameSystem));
-      callback(armyBooks);
-    });
+    const results = await Promise.all(promises)
+    return results.map(res => (res.payload as any).armyBookData) as IArmyData[];
   }
 
   public static download(list: ListState) {

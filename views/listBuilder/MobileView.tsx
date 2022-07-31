@@ -92,7 +92,11 @@ export default function MobileView() {
       <Slider {...sliderSettings} ref={(slider) => setSlider(slider)} style={{ maxHeight: "100%" }}>
         <UnitSelection />
         {list.units.length > 0 ? (
-          <MainList onSelected={onUnitSelected} onUnitRemoved={() => setShowUndoRemove(true)} />
+          <MainList
+            onSelected={onUnitSelected}
+            onUnitRemoved={() => setShowUndoRemove(true)}
+            units={list.units}
+          />
         ) : (
           <div className="p-4 has-text-centered">
             <h3 className="is-size-3 mb-4">Your list is empty</h3>

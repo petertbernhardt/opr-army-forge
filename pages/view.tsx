@@ -71,7 +71,7 @@ export default function View() {
     if (!armyState.loaded) {
       const listId = router.query["listId"] as string;
       if (listId) {
-        PersistenceService.loadFromKey(dispatch, listId, (_) => {});
+        PersistenceService.loadFromKey(dispatch, listId);
         return;
       }
 
