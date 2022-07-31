@@ -52,7 +52,7 @@ export default function DesktopView() {
                 "pts"}
             </h3>
           </Card>
-          <MainList onSelected={() => {}} onUnitRemoved={() => setShowUndoRemove(true)} />
+          <MainList onSelected={() => {}} onUnitRemoved={() => setShowUndoRemove(true)} units={list.units} />
         </div>
         <div className="column py-0 px-0 mr-4" style={columnStyle} onScroll={setScrolled}>
           <Card
