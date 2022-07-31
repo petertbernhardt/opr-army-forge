@@ -51,7 +51,7 @@ export default function GameView({ socket }: GameViewProps) {
         <UnitList socket={socket} units={myList?.units} onUnitClicked={onUnitSelected} />
       </TabPanel>
       <TabPanel value={tab} index={1}>
-        <UnitList socket={socket} units={enemyList?.units} onUnitClicked={onUnitSelected} />
+        <UnitList socket={socket} units={enemyList?.units} onUnitClicked={onUnitSelected} readonly />
       </TabPanel>
       <BottomSheet
         open={Boolean(selection)}
@@ -77,15 +77,22 @@ interface UnitListProps {
   socket: Socket;
   units: IGameplayUnit[];
   onUnitClicked: (unit: IGameplayUnit) => void;
+  readonly?: boolean;
 }
 
-function UnitList({ socket, units, onUnitClicked }: UnitListProps) {
+function UnitList({ socket, units, onUnitClicked, readonly }: UnitListProps) {
   if (!units) return null;
   const displayUnits = _.flatten(Object.values(UnitService.getDisplayUnits(units)));
   const [deadUnits, aliveUnits] = _.partition(displayUnits, (unit) => unit.dead);
   const listItems = (units) =>
     units.map((unit) => (
-      <ListItem key={unit.selectionId} socket={socket} unit={unit} onUnitClicked={onUnitClicked} />
+      <ListItem
+        key={unit.selectionId}
+        socket={socket}
+        unit={unit}
+        onUnitClicked={onUnitClicked}
+        readonly={readonly}
+      />
     ));
   return (
     <>
@@ -106,9 +113,10 @@ interface ListItemProps {
   socket: Socket;
   unit: IGameplayUnit;
   onUnitClicked: (unit: IGameplayUnit) => void;
+  readonly?: boolean;
 }
 
-function ListItem({ socket, unit, onUnitClicked }: ListItemProps) {
+function ListItem({ socket, unit, onUnitClicked, readonly }: ListItemProps) {
   const unitSize = UnitService.getSize(unit);
 
   const sendModifyUnit = (modification: any) => {
@@ -161,34 +169,36 @@ function ListItem({ socket, unit, onUnitClicked }: ListItemProps) {
           {/* {props.rightControl} */}
         </div>
         {!unit.dead && <UnitEquipmentTable loadout={unit.loadout} square />}
-        <Stack sx={{ mt: 2, px: 2, justifyContent: "center" }} direction="row" spacing={2}>
-          {unit.dead ? (
-            <Button size="small" onClick={() => sendModifyUnit({ dead: false })}>
-              Restore
-            </Button>
-          ) : (
-            <>
-              {unit.activated ? (
-                <Button size="small" onClick={() => sendModifyUnit({ activated: false })}>
-                  Deactivate
-                </Button>
-              ) : (
-                <Button
-                  size="small"
-                  onClick={() => sendModifyUnit({ activated: true, pinned: false })}
-                >
-                  Activate
-                </Button>
-              )}
-              <Button size="small" onClick={() => sendModifyUnit({ pinned: true })}>
-                Pinned
+        {!readonly && (
+          <Stack sx={{ mt: 2, px: 2, justifyContent: "center" }} direction="row" spacing={2}>
+            {unit.dead ? (
+              <Button size="small" onClick={() => sendModifyUnit({ dead: false })}>
+                Restore
               </Button>
-              <Button size="small" onClick={() => sendModifyUnit({ dead: true })}>
-                Killed
-              </Button>
-            </>
-          )}
-        </Stack>
+            ) : (
+              <>
+                {unit.activated ? (
+                  <Button size="small" onClick={() => sendModifyUnit({ activated: false })}>
+                    Deactivate
+                  </Button>
+                ) : (
+                  <Button
+                    size="small"
+                    onClick={() => sendModifyUnit({ activated: true, pinned: false })}
+                  >
+                    Activate
+                  </Button>
+                )}
+                <Button size="small" onClick={() => sendModifyUnit({ pinned: true })}>
+                  Pinned
+                </Button>
+                <Button size="small" onClick={() => sendModifyUnit({ dead: true })}>
+                  Killed
+                </Button>
+              </>
+            )}
+          </Stack>
+        )}
       </Paper>
       <Divider />
     </div>
