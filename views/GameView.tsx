@@ -1,4 +1,15 @@
-import { AppBar, Button, Divider, Paper, Stack, Tab, Tabs } from "@mui/material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  AppBar,
+  Button,
+  Divider,
+  Paper,
+  Stack,
+  Tab,
+  Tabs,
+} from "@mui/material";
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../data/store";
@@ -16,14 +27,15 @@ import RuleList from "./components/RuleList";
 
 export interface GameViewProps {
   socket: Socket;
+  userId: string;
 }
 
-export default function GameView({ socket }: GameViewProps) {
+export default function GameView({ socket, userId }: GameViewProps) {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const gameplay = useSelector((state: RootState) => state.gameplay);
-  const myList = gameplay.lists.find((x) => x.user === socket.id);
-  const enemyLists = gameplay.lists.filter((x) => x.user !== socket.id);
+  const myList = gameplay.lists.find((x) => x.user === userId);
+  const enemyLists = gameplay.lists.filter((x) => x.user !== userId);
   const [tab, setTab] = useState(0);
   const [selection, setSelection] = useState<IGameplayUnit>();
 
@@ -134,78 +146,86 @@ function ListItem({ socket, unit, onUnitClicked, readonly }: ListItemProps) {
   };
 
   return (
-    <div className="mb-4">
-      <Paper
-        className="py-2"
+    <Paper sx={{ mb: 2 }} elevation={1} square>
+      <Accordion
         elevation={0}
-        style={{ cursor: "pointer", opacity: unit.dead || unit.activated ? "0.5" : "1" }}
+        style={{ opacity: unit.dead || unit.activated ? "0.5" : "1" }}
+        disableGutters
         square
-        onClick={() => onUnitClicked(unit)}
       >
-        <div className="is-flex is-flex-grow-1 is-align-items-center mb-2 px-2">
+        <AccordionSummary sx={{ py: 0, px: 2 }}>
           <div className="is-flex-grow-1">
-            <p className="" style={{ textDecoration: unit.dead ? "line-through" : "" }}>
-              <span>{unit.customName || unit.name} </span>
-              <span style={{ color: "#656565" }}>
-                [{unitSize}]{" "}
-                <span style={{ fontSize: "80%" }}>
-                  {UpgradeService.calculateUnitTotal(unit)}pts
+            <div className="px-1">
+              <p className="" style={{ textDecoration: unit.dead ? "line-through" : "" }}>
+                <span>{unit.customName || unit.name} </span>
+                <span style={{ color: "#656565" }}>
+                  [{unitSize}]{" "}
+                  <span style={{ fontSize: "80%" }}>
+                    {UpgradeService.calculateUnitTotal(unit)}pts
+                  </span>
                 </span>
-              </span>
-              <span>{unit.pinned ? " (Pinned)" : ""}</span>
-            </p>
-            <div
-              style={{
-                fontSize: "14px",
-                color: "rgba(0,0,0,0.6)",
-              }}
-            >
-              <div className="is-flex">
-                <p>Qua {unit.quality}+</p>
-                <p className="ml-2">Def {unit.defense}+</p>
+                <span>{unit.pinned ? " (Pinned)" : ""}</span>
+              </p>
+              <div
+                style={{
+                  fontSize: "14px",
+                  color: "rgba(0,0,0,0.6)",
+                }}
+              >
+                <div className="is-flex">
+                  <p>Qua {unit.quality}+</p>
+                  <p className="ml-2">Def {unit.defense}+</p>
+                </div>
+                <RuleList
+                  specialRules={unit.specialRules.concat(
+                    UnitService.getAllUpgradedRules(unit as any)
+                  )}
+                />
               </div>
-              <RuleList
-                specialRules={unit.specialRules.concat(
-                  UnitService.getAllUpgradedRules(unit as any)
-                )}
-              />
             </div>
           </div>
-          {/* {props.rightControl} */}
-        </div>
-        {!unit.dead && <UnitEquipmentTable loadout={unit.loadout} square />}
-        {!readonly && (
-          <Stack sx={{ mt: 2, px: 2, justifyContent: "center" }} direction="row" spacing={2}>
-            {unit.dead ? (
-              <Button size="small" onClick={() => sendModifyUnit({ dead: false })}>
-                Restore
+        </AccordionSummary>
+        <AccordionDetails sx={{ p: 1 }}>
+          <Paper
+            elevation={0}
+            style={{ cursor: "pointer" }}
+            square
+            onClick={() => onUnitClicked(unit)}
+          >
+            {!unit.dead && <UnitEquipmentTable loadout={unit.loadout} square />}
+          </Paper>
+        </AccordionDetails>
+      </Accordion>
+      {!readonly && (
+        <Stack sx={{ pb: 1, px: 2 }} direction="row" spacing={2}>
+          {unit.dead ? (
+            <Button size="small" onClick={() => sendModifyUnit({ dead: false })}>
+              Restore
+            </Button>
+          ) : (
+            <>
+              {unit.activated ? (
+                <Button size="small" onClick={() => sendModifyUnit({ activated: false })}>
+                  Deactivate
+                </Button>
+              ) : (
+                <Button
+                  size="small"
+                  onClick={() => sendModifyUnit({ activated: true, pinned: false })}
+                >
+                  Activate
+                </Button>
+              )}
+              <Button size="small" onClick={() => sendModifyUnit({ pinned: true })}>
+                Pinned
               </Button>
-            ) : (
-              <>
-                {unit.activated ? (
-                  <Button size="small" onClick={() => sendModifyUnit({ activated: false })}>
-                    Deactivate
-                  </Button>
-                ) : (
-                  <Button
-                    size="small"
-                    onClick={() => sendModifyUnit({ activated: true, pinned: false })}
-                  >
-                    Activate
-                  </Button>
-                )}
-                <Button size="small" onClick={() => sendModifyUnit({ pinned: true })}>
-                  Pinned
-                </Button>
-                <Button size="small" onClick={() => sendModifyUnit({ dead: true })}>
-                  Killed
-                </Button>
-              </>
-            )}
-          </Stack>
-        )}
-      </Paper>
-      <Divider />
-    </div>
+              <Button size="small" onClick={() => sendModifyUnit({ dead: true })}>
+                Killed
+              </Button>
+            </>
+          )}
+        </Stack>
+      )}
+    </Paper>
   );
 }

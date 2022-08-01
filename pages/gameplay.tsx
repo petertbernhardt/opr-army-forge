@@ -11,9 +11,13 @@ import PersistenceService from "../services/PersistenceService";
 import { MenuBar } from "../views/components/MenuBar";
 import WifiOffIcon from "@mui/icons-material/WifiOff";
 import GameView from "../views/GameView";
+import { nanoid } from "nanoid";
 
 function Gameplay() {
   const dispatch = useAppDispatch();
+  const [userId, _] = useState(
+    sessionStorage["af_userId"] ?? (sessionStorage["af_userId"] = nanoid(8))
+  );
   const gameplay = useSelector((state: RootState) => state.gameplay);
   const [socket, setSocket] = useState<Socket>();
   const [isConnected, setIsConnected] = useState(socket?.connected);
@@ -69,18 +73,27 @@ function Gameplay() {
                 <WifiOffIcon />
               </Tooltip>
             )}
-            {gameplay.lobbyId && <p>Lobby: {gameplay.lobbyId}</p>}
+            {gameplay.lobbyId && (
+              <div>
+                <p>User: {userId}</p>
+                <p>Lobby: {gameplay.lobbyId}</p>
+              </div>
+            )}
           </Stack>
         }
       />
-      {socket && gameplay.lobbyId ? <GameView socket={socket} /> : <StartGame socket={socket} />}
+      {socket && gameplay.lobbyId ? (
+        <GameView socket={socket} userId={userId} />
+      ) : (
+        <StartGame socket={socket} userId={userId} />
+      )}
     </>
   );
 }
 
 export default dynamic(() => Promise.resolve(Gameplay), { ssr: false });
 
-function StartGame({ socket }) {
+function StartGame({ socket, userId }) {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
@@ -94,7 +107,7 @@ function StartGame({ socket }) {
     const armyBooks = await PersistenceService.loadBooks(dispatch, armyIds, save.gameSystem);
     const list: IList = {
       ...(PersistenceService.buildListFromSave(save, armyBooks) as any), // Cast since unit types don't match...
-      user: socket.id,
+      user: userId
     };
     dispatch(addList(list));
     return list;
@@ -102,7 +115,7 @@ function StartGame({ socket }) {
 
   const createLobby = async () => {
     const list = await loadList();
-    socket.emit("create-lobby", list, (res) => {
+    socket.emit("create-lobby", userId, list, (res) => {
       dispatch(setLobby(res.lobbyId));
     });
   };
@@ -112,7 +125,7 @@ function StartGame({ socket }) {
     if (lobbyId) {
       const list = await loadList();
 
-      socket.emit("join-lobby", lobbyId, list, (lobby) => {
+      socket.emit("join-lobby", userId, lobbyId, list, (lobby) => {
         dispatch(setLobby(lobbyId));
         for (var user of lobby.users) {
           dispatch(addList(user.list));
