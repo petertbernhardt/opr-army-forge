@@ -27,6 +27,9 @@ export const gameplaySlice = createSlice({
   name: 'gameplay',
   initialState,
   reducers: {
+    resetGameplay(state) {
+      return initialState;
+    },
     setLobby(state, action: PayloadAction<string>) {
       state.lobbyId = action.payload;
     },
@@ -47,6 +50,6 @@ export const gameplaySlice = createSlice({
 })
 
 // Action creators are generated for each case reducer function
-export const { setLobby, addList, modifyUnit, removeUser } = gameplaySlice.actions;
+export const { setLobby, addList, modifyUnit, removeUser, resetGameplay } = gameplaySlice.actions;
 
 export default gameplaySlice.reducer;

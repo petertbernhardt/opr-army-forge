@@ -142,7 +142,7 @@ function ListItem({ socket, unit, onUnitClicked, readonly }: ListItemProps) {
         square
         onClick={() => onUnitClicked(unit)}
       >
-        <div className="is-flex is-flex-grow-1 is-align-items-center mb-2 px-2 has-text-centered">
+        <div className="is-flex is-flex-grow-1 is-align-items-center mb-2 px-2">
           <div className="is-flex-grow-1">
             <p className="" style={{ textDecoration: unit.dead ? "line-through" : "" }}>
               <span>{unit.customName || unit.name} </span>
@@ -160,7 +160,7 @@ function ListItem({ socket, unit, onUnitClicked, readonly }: ListItemProps) {
                 color: "rgba(0,0,0,0.6)",
               }}
             >
-              <div className="is-flex" style={{ justifyContent: "center" }}>
+              <div className="is-flex">
                 <p>Qua {unit.quality}+</p>
                 <p className="ml-2">Def {unit.defense}+</p>
               </div>

@@ -5,7 +5,7 @@ import React, { Fragment, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import io, { Socket } from "socket.io-client";
 import { getGameRules, resetLoadedBooks, setGameSystem } from "../data/armySlice";
-import { addList, IList, removeUser, setLobby } from "../data/gameplaySlice";
+import { addList, IList, removeUser, resetGameplay, setLobby } from "../data/gameplaySlice";
 import { RootState, useAppDispatch } from "../data/store";
 import PersistenceService from "../services/PersistenceService";
 import { MenuBar } from "../views/components/MenuBar";
@@ -29,6 +29,7 @@ function Gameplay() {
 
     // Reset all loaded books
     dispatch(resetLoadedBooks());
+    dispatch(resetGameplay());
 
     socket.on("connect", () => {
       setIsConnected(true);
@@ -72,10 +73,7 @@ function Gameplay() {
           </Stack>
         }
       />
-      {gameplay.lobbyId ? <GameView socket={socket} /> : <StartGame socket={socket} />}
-      {gameplay.lists.map((list) => (
-        <Fragment key={list.user}></Fragment>
-      ))}
+      {socket && gameplay.lobbyId ? <GameView socket={socket} /> : <StartGame socket={socket} />}
     </>
   );
 }
