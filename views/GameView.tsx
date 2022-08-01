@@ -62,11 +62,22 @@ export default function GameView({ socket, userId }: GameViewProps) {
         </Tabs>
       </AppBar>
       <TabPanel value={tab} index={0}>
-        <UnitList socket={socket} units={myList?.units} onUnitClicked={onUnitSelected} />
+        <UnitList
+          socket={socket}
+          userId={userId}
+          units={myList?.units}
+          onUnitClicked={onUnitSelected}
+        />
       </TabPanel>
       {enemyLists.map((list, i) => (
         <TabPanel key={list.user} value={tab} index={i + 1}>
-          <UnitList socket={socket} units={list.units} onUnitClicked={onUnitSelected} readonly />
+          <UnitList
+            socket={socket}
+            userId={userId}
+            units={list.units}
+            onUnitClicked={onUnitSelected}
+            readonly
+          />
         </TabPanel>
       ))}
 
@@ -92,12 +103,13 @@ export default function GameView({ socket, userId }: GameViewProps) {
 
 interface UnitListProps {
   socket: Socket;
+  userId: string;
   units: IGameplayUnit[];
   onUnitClicked: (unit: IGameplayUnit) => void;
   readonly?: boolean;
 }
 
-function UnitList({ socket, units, onUnitClicked, readonly }: UnitListProps) {
+function UnitList({ socket, userId, units, onUnitClicked, readonly }: UnitListProps) {
   if (!units) return null;
   const displayUnits = _.flatten(Object.values(UnitService.getDisplayUnits(units)));
   const [deadUnits, aliveUnits] = _.partition(displayUnits, (unit) => unit.dead);
@@ -106,6 +118,7 @@ function UnitList({ socket, units, onUnitClicked, readonly }: UnitListProps) {
       <ListItem
         key={unit.selectionId}
         socket={socket}
+        userId={userId}
         unit={unit}
         onUnitClicked={onUnitClicked}
         readonly={readonly}
@@ -128,17 +141,18 @@ function UnitList({ socket, units, onUnitClicked, readonly }: UnitListProps) {
 
 interface ListItemProps {
   socket: Socket;
+  userId: string;
   unit: IGameplayUnit;
   onUnitClicked: (unit: IGameplayUnit) => void;
   readonly?: boolean;
 }
 
-function ListItem({ socket, unit, onUnitClicked, readonly }: ListItemProps) {
+function ListItem({ socket, userId, unit, onUnitClicked, readonly }: ListItemProps) {
   const unitSize = UnitService.getSize(unit);
 
   const sendModifyUnit = (modification: any) => {
     const action = modifyUnit({
-      user: socket.id,
+      user: userId,
       unitId: unit.selectionId,
       modification,
     });
