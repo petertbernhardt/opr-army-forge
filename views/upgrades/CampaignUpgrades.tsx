@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   Accordion,
   AccordionDetails,
@@ -25,6 +26,8 @@ interface CampaignUpgradesProps {
 export default function CampaignUpgrades({ unit }: CampaignUpgradesProps) {
   const dispatch = useDispatch();
 
+  console.warn('unit', unit);
+
   const isHero = unit.specialRules.some((r) => r.name === "Hero");
   const allTraitDefinitions = getTraitDefinitions();
   const traitDefinitions = allTraitDefinitions[isHero ? "heroes" : "units"];
@@ -43,6 +46,15 @@ export default function CampaignUpgrades({ unit }: CampaignUpgradesProps) {
     else if (isTalent(trait)) talentCount++;
     else traitCount++;
   }
+
+  useEffect(() => {
+    if (injuryCount > 0) {
+      // lower unit cost by 5 for every injury
+      // TODO: this code doesn't work because unit.cost is read-only
+      // unit.cost -= (5 * injuryCount); 
+      console.warn('lower cost somehow!');
+    }
+  }, [injuryCount])
 
   const adjustUnitXp = (xp: number) => {
     dispatch(adjustXp({ unitId: unit.selectionId, xp }));
