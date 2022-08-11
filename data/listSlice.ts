@@ -287,6 +287,15 @@ export const listSlice = createSlice({
 
       debounceSave(current(state));
     },
+    adjustCost(state, action: PayloadAction<{ unitId: string, cost: number }>) {
+      const { unitId, cost } = action.payload;
+      const unit = state.units.find(u => u.selectionId === unitId);
+      unit.cost = cost;
+
+      state.points = UpgradeService.calculateListTotal(state.units);
+
+      debounceSave(current(state));
+    },
     toggleTrait(state, action: PayloadAction<{ unitId: string, trait: string }>) {
       const { unitId, trait } = action.payload;
       const unit = state.units.find(u => u.selectionId === unitId);
@@ -332,6 +341,7 @@ export const {
   previewUnit,
   clearPreview,
   adjustXp,
+  adjustCost,
   toggleTrait,
   setUnitNotes
 } = listSlice.actions;

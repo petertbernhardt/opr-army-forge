@@ -15,7 +15,7 @@ import UpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { ISelectedUnit } from "../../data/interfaces";
 import { useDispatch } from "react-redux";
 import { getTraitDefinitions, ISkillSet, ITrait } from "../../data/campaign";
-import { adjustXp, toggleTrait } from "../../data/listSlice";
+import { adjustCost, adjustXp, toggleTrait } from "../../data/listSlice";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import RuleList from "../components/RuleList";
 
@@ -48,9 +48,13 @@ export default function CampaignUpgrades({ unit }: CampaignUpgradesProps) {
   useEffect(() => {
     if (injuryCount > 0) {
       // lower unit cost by 5 for every injury
-      // TODO: this code doesn't work because unit.cost is read-only
-      // unit.cost -= (5 * injuryCount); 
       console.warn('lower cost somehow!');
+
+      const newCost = unit.cost - (5 * injuryCount);
+
+      dispatch(adjustCost({ unitId: unit.selectionId, cost: newCost}))
+    } else if (injuryCount === 0) {
+      // reset cost to original
     }
   }, [injuryCount])
 
