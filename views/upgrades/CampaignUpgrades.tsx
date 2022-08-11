@@ -26,8 +26,6 @@ interface CampaignUpgradesProps {
 export default function CampaignUpgrades({ unit }: CampaignUpgradesProps) {
   const dispatch = useDispatch();
 
-  console.warn('unit', unit);
-
   const isHero = unit.specialRules.some((r) => r.name === "Hero");
   const allTraitDefinitions = getTraitDefinitions();
   const traitDefinitions = allTraitDefinitions[isHero ? "heroes" : "units"];
