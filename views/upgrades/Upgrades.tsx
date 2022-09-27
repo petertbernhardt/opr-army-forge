@@ -24,7 +24,8 @@ import { CustomTooltip } from "../components/CustomTooltip";
 import CampaignUpgrades from "./CampaignUpgrades";
 import { IGameRule } from "../../data/armySlice";
 import UnitNotes from "../components/UnitNotes";
-import { Fragment } from "react";
+import { Fragment, useEffect } from "react";
+import { usePrevious } from "../../hooks/usePrevious";
 
 export function Upgrades() {
   const list = useSelector((state: RootState) => state.list);
@@ -219,7 +220,7 @@ export function Upgrades() {
       )}
 
       {list.campaignMode && selectedUnit && !previewMode && (
-        <CampaignUpgrades unit={selectedUnit} />
+        <CampaignUpgrades unit={selectedUnit} originalCost={selectedUnit.cost} />
       )}
 
       {upgradeSets.map((pkg: IUpgradePackage) => (

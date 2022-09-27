@@ -300,6 +300,7 @@ export const listSlice = createSlice({
       const { unitId, trait } = action.payload;
       const unit = state.units.find(u => u.selectionId === unitId);
       const existingTraitIndex = unit.traits.findIndex(t => t === trait);
+      console.warn('existingTraitIndex', existingTraitIndex);
       if (existingTraitIndex >= 0) {
         unit.traits.splice(existingTraitIndex, 1);
       } else {

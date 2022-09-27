@@ -21,9 +21,10 @@ import RuleList from "../components/RuleList";
 
 interface CampaignUpgradesProps {
   unit: ISelectedUnit;
+  originalCost: number;
 }
 
-export default function CampaignUpgrades({ unit }: CampaignUpgradesProps) {
+export default function CampaignUpgrades({ unit, originalCost }: CampaignUpgradesProps) {
   const dispatch = useDispatch();
 
   const isHero = unit.specialRules.some((r) => r.name === "Hero");
@@ -45,16 +46,14 @@ export default function CampaignUpgrades({ unit }: CampaignUpgradesProps) {
     else traitCount++;
   }
 
+  console.warn('original Cost', originalCost);
+
+  // lower unit cost by 5 for every injury
   useEffect(() => {
-    if (injuryCount > 0) {
-      // lower unit cost by 5 for every injury
-      console.warn('lower cost somehow!');
-
-      const newCost = unit.cost - (5 * injuryCount);
-
+    // TODO: this "works" but when all injuries are removed the original cost isn't reverted
+    if (originalCost) {
+      const newCost = originalCost - (5 * injuryCount);
       dispatch(adjustCost({ unitId: unit.selectionId, cost: newCost}))
-    } else if (injuryCount === 0) {
-      // reset cost to original
     }
   }, [injuryCount])
 
@@ -63,7 +62,10 @@ export default function CampaignUpgrades({ unit }: CampaignUpgradesProps) {
   };
 
   const toggleUnitTrait = (trait: ITrait) => {
+    console.warn('trait', trait);
+    console.warn('unit cost pre', unit.cost);
     dispatch(toggleTrait({ unitId: unit.selectionId, trait: trait.name }));
+    console.warn('unit cost post', unit.cost);
   };
 
   const traitControls = (traits, requireLevels: boolean = false) => {
